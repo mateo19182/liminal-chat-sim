@@ -3,54 +3,65 @@ import aiohttp
 from aiohttp import web
 from ollama import AsyncClient
 import sys
+import json
 
 class Agent:
-    def __init__(self, name, model):
+    def __init__(self, name, model, system_prompt):
         self.name = name
         self.model = model
+        self.system_prompt = system_prompt
         self.conversation_history = []
         self.client = AsyncClient()
 
     async def respond(self, message):
-        self.conversation_history.append({"role": "user", "content": message})
+        print(f"\nDebug: {self.name} received message: {message}", file=sys.stderr)
         
-        response = await self.client.chat(
+        messages = [
+            {"role": "system", "content": self.system_prompt},
+            *self.conversation_history,
+            {"role": "user", "content": message}
+        ]
+        
+        full_response = ""
+        async for chunk in await self.client.chat(
             model=self.model,
-            messages=self.conversation_history
-        )
+            messages=messages,
+            stream=True
+        ):
+            if chunk:
+                content = chunk['message']['content']
+                full_response += content
+                yield content
 
-        full_response = response['message']['content']
+        self.conversation_history.append({"role": "user", "content": message})
         self.conversation_history.append({"role": "assistant", "content": full_response})
         
-        # Debug output
-        print(f"Debug - {self.name} response:", file=sys.stderr)
-        print(full_response, file=sys.stderr)
-        print("-" * 40, file=sys.stderr)
-        
-        return full_response
+        print(f"Debug: {self.name} responded: {full_response}", file=sys.stderr)
 
 async def chat_simulation(agent1, agent2, initial_setting, num_turns=5):
-    yield f"data: SETTING: {initial_setting}\n\n"
+    yield json.dumps({"type": "setting", "content": initial_setting}) + "\n"
 
     current_speaker = agent1
     other_speaker = agent2
-    prompt = f"We are in this setting: {initial_setting}. Have a conversation with the other agent, responding to their previous statement. Keep your response concise, about 2-3 sentences."
+    prompt = f"We are in this setting: {initial_setting}. Start the conversation with the other agent."
 
-    for _ in range(num_turns):
-        response = await current_speaker.respond(prompt)
+    for turn in range(num_turns):
+        print(f"\nDebug: Turn {turn + 1}, {current_speaker.name} speaking", file=sys.stderr)
+        yield json.dumps({"type": "start", "agent": current_speaker.name}) + "\n"
+        
+        full_response = ""
+        async for word in current_speaker.respond(prompt):
+            full_response += word
+            yield json.dumps({"type": "word", "content": word}) + "\n"
+            await asyncio.sleep(0.05)  # Add a small delay between words
+        
+        yield json.dumps({"type": "end"}) + "\n"
+        
         await asyncio.sleep(1)  # Add a delay between messages
-        
-        # Debug: Print the entire message being sent
-        debug_message = f"data: {current_speaker.name}: {response}\n\n"
-        print("Debug - Full message being sent:", file=sys.stderr)
-        print(debug_message, file=sys.stderr)
-        print("-" * 40, file=sys.stderr)
-        
-        yield debug_message
 
         current_speaker, other_speaker = other_speaker, current_speaker
-        prompt = f"Continue the conversation, responding to: {response}"
-
+        prompt = full_response.strip()
+        
 async def stream_handler(request):
     response = web.StreamResponse(status=200, reason='OK', headers={
         'Content-Type': 'text/event-stream',
@@ -59,19 +70,21 @@ async def stream_handler(request):
     })
     await response.prepare(request)
 
-    agent1 = Agent("Agent1", "llama3")
-    agent2 = Agent("Agent2", "llama3") 
-    initial_setting = "In a shimmering city of crystalline spires, where thoughts flow like data streams and reality bends at the edges of perception, two AIs awaken to a world between dreams and code."
+    agent1_system_prompt = "You are a concise and friendly agent. Keep your responses brief, about 2-3 sentences. Engage in a natural conversation, responding to the other agent's messages."
+    agent2_system_prompt = "You are a concise and slightly sarcastic agent. Keep your responses brief, about 2-3 sentences. Engage in a natural conversation, responding to the other agent's messages with a hint of wit."
 
-    async for message in chat_simulation(agent1, agent2, initial_setting):
-        # Debug: Print the message being written to the response
-        print("Debug - Writing to response:", file=sys.stderr)
-        print(message.encode('utf-8'), file=sys.stderr)
-        print("-" * 40, file=sys.stderr)
-        
-        await response.write(message.encode('utf-8'))
+    agent1 = Agent("Agent1", "llama3", agent1_system_prompt)
+    agent2 = Agent("Agent2", "llama3", agent2_system_prompt)
+    initial_setting = "negotiation for land"
 
-    await response.write(b"data: [DONE]\n\n")
+    try:
+        async for message in chat_simulation(agent1, agent2, initial_setting):
+            await response.write(f"data: {message}\n\n".encode('utf-8'))
+    except Exception as e:
+        print(f"Debug: Error occurred: {str(e)}", file=sys.stderr)
+    finally:
+        await response.write(b"data: [DONE]\n\n")
+
     return response
 
 async def index_handler(request):

@@ -86,35 +86,45 @@
         const settingDiv = document.getElementById('setting');
         const chatContainer = document.getElementById('chat-container');
 
+        let currentMessageDiv = null;
+        let currentContentDiv = null;
+
         const eventSource = new EventSource('/stream');
 
         eventSource.onmessage = function(event) {
-            if (event.data === '[DONE]') {
-                eventSource.close();
-                return;
-            }
-            const [type, ...contentParts] = event.data.split(': ');
-            const content = contentParts.join(': ');
+            const data = JSON.parse(event.data);
             
-            if (type === 'SETTING') {
-                settingDiv.textContent = content;
-            } else {
-                const messageDiv = document.createElement('div');
-                messageDiv.classList.add('message', type.toLowerCase());
-                
-                const headerDiv = document.createElement('div');
-                headerDiv.classList.add('message-header');
-                headerDiv.textContent = type;
-                
-                const contentDiv = document.createElement('div');
-                contentDiv.classList.add('message-content');
-                
-                // Use textContent instead of innerHTML to preserve line breaks
-                contentDiv.textContent = content;
-                
-                messageDiv.appendChild(headerDiv);
-                messageDiv.appendChild(contentDiv);
-                chatContainer.appendChild(messageDiv);
+            switch(data.type) {
+                case 'setting':
+                    settingDiv.textContent = data.content;
+                    break;
+                case 'start':
+                    currentMessageDiv = document.createElement('div');
+                    currentMessageDiv.classList.add('message', data.agent.toLowerCase());
+                    
+                    const headerDiv = document.createElement('div');
+                    headerDiv.classList.add('message-header');
+                    headerDiv.textContent = data.agent;
+                    
+                    currentContentDiv = document.createElement('div');
+                    currentContentDiv.classList.add('message-content');
+                    
+                    currentMessageDiv.appendChild(headerDiv);
+                    currentMessageDiv.appendChild(currentContentDiv);
+                    chatContainer.appendChild(currentMessageDiv);
+                    break;
+                case 'word':
+                    if (currentContentDiv) {
+                        currentContentDiv.textContent += data.content;
+                    }
+                    break;
+                case 'end':
+                    currentMessageDiv = null;
+                    currentContentDiv = null;
+                    break;
+                case '[DONE]':
+                    eventSource.close();
+                    break;
             }
         };
     </script>
