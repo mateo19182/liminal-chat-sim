@@ -1,10 +1,7 @@
-- are messages being truncated on first line break ?!
-
-- stream messages
-- get roles working
-
+TODO:
+- simplify code
+- set prompt on ui
 - images generated with sdturbo inrealtime
-
 - finetune models
 
 ultimate idea its a book/theater play that writes itself infinetly
