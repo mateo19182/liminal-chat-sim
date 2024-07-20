@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agents Chat Simulation</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background-color: #1a1a1a; 
+            color: #e0e0e0; 
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            color: #4a90e2;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .setting { 
+            font-size: 0.9em; 
+            text-align: center; 
+            margin-bottom: 30px; 
+            font-style: italic; 
+            color: #b0b0b0; 
+            max-width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .chat-container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .message { 
+            margin-bottom: 20px; 
+            border-radius: 10px; 
+            max-width: 45%; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .message-header {
+            padding: 5px 10px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .message-content {
+            padding: 15px;
+            white-space: pre-wrap;
+        }
+        .agent1 { 
+            align-self: flex-start;
+            margin-right: 55%; 
+        }
+        .agent1 .message-header {
+            background-color: #1e2f4a;
+            color: #7fa8d7;
+        }
+        .agent1 .message-content {
+            background-color: #2a3f5f;
+        }
+        .agent2 { 
+            align-self: flex-end;
+            margin-left: 55%; 
+        }
+        .agent2 .message-header {
+            background-color: #2d2d2d;
+            color: #b0b0b0;
+        }
+        .agent2 .message-content {
+            background-color: #3c3c3c;
+        }
+    </style>
+</head>
+<body>
+    <h1>AI Agents Chat Simulation</h1>
+    <div id="setting" class="setting"></div>
+    <div id="chat-container" class="chat-container"></div>
+    <script>
+        const settingDiv = document.getElementById('setting');
+        const chatContainer = document.getElementById('chat-container');
+
+        const eventSource = new EventSource('/stream');
+
+        eventSource.onmessage = function(event) {
+            if (event.data === '[DONE]') {
+                eventSource.close();
+                return;
+            }
+            const [type, ...contentParts] = event.data.split(': ');
+            const content = contentParts.join(': ');
+            
+            if (type === 'SETTING') {
+                settingDiv.textContent = content;
+            } else {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message', type.toLowerCase());
+                
+                const headerDiv = document.createElement('div');
+                headerDiv.classList.add('message-header');
+                headerDiv.textContent = type;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.classList.add('message-content');
+                
+                // Use textContent instead of innerHTML to preserve line breaks
+                contentDiv.textContent = content;
+                
+                messageDiv.appendChild(headerDiv);
+                messageDiv.appendChild(contentDiv);
+                chatContainer.appendChild(messageDiv);
+            }
+        };
+    </script>
+</body>
+</html>
