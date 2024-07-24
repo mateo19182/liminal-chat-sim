@@ -1,14 +1,12 @@
-- are messages being truncated on first line break ?!
+Simple UI for having multiple LLM agents chatting to each other.
 
-- stream messages
-- get roles working
+Requires [Ollama](https://ollama.com/).
 
+
+TODO:
+- simplify code
+- set prompt on ui
 - images generated with sdturbo inrealtime
-
 - finetune models
 
-ultimate idea its a book/theater play that writes itself infinetly
-
-
-
-https://github.com/midnqp/ai-chats-ai
+ultimate idea its a book/theater play that writes itself infinetly...
