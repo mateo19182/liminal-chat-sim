@@ -61,7 +61,7 @@ async def chat_simulation(agent1, agent2, initial_setting, num_turns=5):
 
         current_speaker, other_speaker = other_speaker, current_speaker
         prompt = full_response.strip()
-        
+
 async def stream_handler(request):
     response = web.StreamResponse(status=200, reason='OK', headers={
         'Content-Type': 'text/event-stream',
@@ -70,8 +70,8 @@ async def stream_handler(request):
     })
     await response.prepare(request)
 
-    agent1_system_prompt = "You are a concise and friendly agent. Keep your responses brief, about 2-3 sentences. Engage in a natural conversation, responding to the other agent's messages."
-    agent2_system_prompt = "You are a concise and slightly sarcastic agent. Keep your responses brief, about 2-3 sentences. Engage in a natural conversation, responding to the other agent's messages with a hint of wit."
+    agent1_system_prompt = "You are a concise and friendly agent. Keep your responses short. Engage in a natural conversation, responding to the other agent's messages."
+    agent2_system_prompt = "You are a concise and slightly sarcastic agent. Keep your responses short. Engage in a natural conversation, responding to the other agent's messages with a hint of wit."
 
     agent1 = Agent("Agent1", "llama3", agent1_system_prompt)
     agent2 = Agent("Agent2", "llama3", agent2_system_prompt)
