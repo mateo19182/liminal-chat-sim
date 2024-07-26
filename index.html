@@ -100,7 +100,14 @@
                     break;
                 case 'start':
                     currentMessageDiv = document.createElement('div');
-                    currentMessageDiv.classList.add('message', data.agent.toLowerCase());
+                    currentMessageDiv.classList.add('message');
+                    
+                    // Determine which agent is speaking
+                    if (data.agent === 'Agent1') {
+                        currentMessageDiv.classList.add('agent1');
+                    } else if (data.agent === 'Miguel Anxo Bastos') {
+                        currentMessageDiv.classList.add('agent2');
+                    }
                     
                     const headerDiv = document.createElement('div');
                     headerDiv.classList.add('message-header');
