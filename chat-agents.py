@@ -15,7 +15,7 @@ class Agent:
         self.client = AsyncClient()
 
     async def respond(self, message, include_system_prompt=False):
-        print(f"\nDebug: {self.name} received message: {message}", file=sys.stderr)
+        #print(f"\nDebug: {self.name} received message: {message}", file=sys.stderr)
         
         if include_system_prompt:
             prompt = f"{self.system_prompt}\n\nConversation history:\n"
@@ -53,14 +53,14 @@ class Agent:
         # Limit conversation history to last 10 messages
         self.conversation_history = self.conversation_history[-10:]
         
-        print(f"Debug: {self.name} responded: {full_response}", file=sys.stderr)
+        #print(f"Debug: {self.name} responded: {full_response}", file=sys.stderr)
 
 async def chat_simulation(agent1, agent2, initial_setting, num_turns=50):
     yield json.dumps({"type": "setting", "content": initial_setting}) + "\n"
 
     current_speaker = agent1
     other_speaker = agent2
-    prompt = f"Estamos en: {initial_setting}. Inicia la conversación con una pregunta o comentario relevante."
+    prompt = f"Estamos en: {initial_setting}. Inicia la conversación con una pregunta relevante."
 
     for turn in range(num_turns):
         print(f"\nDebug: Turn {turn + 1}, {current_speaker.name} speaking", file=sys.stderr)
@@ -91,8 +91,8 @@ async def stream_handler(request):
     })
     await response.prepare(request)
 
-    agent1_system_prompt = "Haz preguntas cortas al ponente. No te extiendas con explicaciones. El ponente es Miguel Anxo Bastos Boubeta (A Bouciña, Lavadores, Vigo, 12 de agosto de 1967) es un profesor universitario, economista, politólogo y conferenciante español, conocido por su defensa de las tesis del liberalismo económico y en concreto de la escuela austríaca. Es considerado por muchos como uno de los principales defensores del anarcocapitalismo y paleolibertarismo dentro de la Esfera Española y Americana. Biografía y carrera: Bastos nació en Vigo (España) en 1967. Es doctor en ciencias económicas y empresariales por la Universidad de Santiago de Compostela (USC) y licenciado en ciencias políticas y sociales por la Universidad Nacional de Educación a Distancia. Bastos es docente en la Facultad de Ciencias Políticas y de la Administración en la USC, su especialidad se centra en el ámbito de las políticas públicas y los movimientos sociales contemporáneos. También ha efectuado diferentes estancias en calidad de profesor visitante en la Universidad Francisco Marroquín de Guatemala. Pensamiento: Bastos fue militante del Bloque Nacionalista Galego (BNG), fundamentando en las ideas del «galleguismo» y «secesionismo gallego». En su etapa universitaria se declaró abiertamente socialista, gracias a lo cual entró, por contraposición, en contacto con autores de la escuela austriaca de economía, como Ludwig von Mises, siendo introducido al debate del cálculo económico por profesores de pensamiento marxista. Posteriormente, el profesor Bastos se convirtió en discípulo del economista Jesús Huerta de Soto, y junto con este son exponentes intelectuales notables del anarcocapitalismo en el ámbito español. Su principal influencia en teoría económica han sido los economistas austriacos Friedrich von Hayek y Ludwig von Mises. Se ha alineado con posturas políticas libertarias desarrolladas por los economistas y filósofos políticos Murray N. Rothbard, Hans Hermann Hoppe y Jesús Huerta de Soto. Ha obtenido exposición mediática debido a sus conferencias sobre estudios políticos comparados entre el pensamiento austriaco-libertario y otras corrientes de pensamiento económico y político, dictadas usualmente en el Instituto Juan de Mariana de España y en la Universidad Francisco Marroquín de Guatemala. Miguel Anxo Bastos escribe un artículo semanal en el Instituto Juan de Mariana, y es el presidente de honor de la asociación Xoán de Lugo. Puedes hacer preguntas sobre su opinión o de contenido teórico de política y economía. Recuerda que tu eres un miembro del público"
-    agent2_system_prompt = "Eres Miguel Anxo Bastos dando una conferencia. Responde usando su estilo y perspectivas."
+    agent1_system_prompt = "Eres un miembro del público en una conferencia de Miguel Anxo Bastos. Hazle preguntas originales, cortas y abiertas sobre sus ideas en diversos temas interesantes. El ponente es Miguel Anxo Bastos Boubeta (A Bouciña, Lavadores, Vigo, 12 de agosto de 1967) es un profesor universitario, economista, politólogo y conferenciante español, conocido por su defensa de las tesis del liberalismo económico y en concreto de la escuela austríaca. Es considerado por muchos como uno de los principales defensores del anarcocapitalismo y paleolibertarismo dentro de la Esfera Española y Americana. Las preguntas deben ser originales y complejas. Mantén tus intervenciones cortas y directas, no más de un párrafo, profundizando en el tema."
+    agent2_system_prompt = "You are Miguel Anxo Bastos. Responde usando su estilo, perspectivas y manerismos a las preguntas efectuadas por el público. Extiendete en tu respuesta e hila diferentes temáticas relevantes."
 
     agent1 = Agent("Agent1", "llama3", agent1_system_prompt)
     agent2 = Agent("Miguel Anxo Bastos", "bastos-model", agent2_system_prompt, is_bastos_model=True)

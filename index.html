@@ -5,47 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Agents Chat Simulation</title>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            margin: 0; 
-            padding: 20px; 
-            background-color: #1a1a1a; 
-            color: #e0e0e0; 
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
         h1 {
             text-align: center;
             font-size: 2.5em;
-            color: #4a90e2;
+            color: #ffffff;
             margin-bottom: 30px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
-        .setting { 
-            font-size: 0.9em; 
-            text-align: center; 
-            margin-bottom: 30px; 
-            font-style: italic; 
-            color: #b0b0b0; 
+        .setting {
+            font-size: 0.9em;
+            text-align: center;
+            margin-bottom: 30px;
+            font-style: italic;
+            color: #b0b0b0;
             max-width: 80%;
             margin-left: auto;
             margin-right: auto;
         }
-        .chat-container { 
-            max-width: 900px; 
-            margin: 0 auto; 
+        .chat-container {
+            max-width: 900px;
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
             align-items: stretch;
         }
-        .message { 
-            margin-bottom: 20px; 
-            border-radius: 10px; 
-            max-width: 45%; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        .message {
+            margin-bottom: 20px;
+            border-radius: 10px;
+            max-width: 45%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             overflow: hidden;
+            animation: fadeIn 0.5s ease;
         }
         .message-header {
-            padding: 5px 10px;
-            font-size: 0.8em;
+            padding: 10px;
+            font-size: 0.85em;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -53,28 +54,33 @@
         .message-content {
             padding: 15px;
             white-space: pre-wrap;
+            background-color: rgba(0, 0, 0, 0.1);
         }
-        .agent1 { 
+        .agent1 {
             align-self: flex-start;
-            margin-right: 55%; 
+            margin-right: 55%;
         }
         .agent1 .message-header {
-            background-color: #1e2f4a;
-            color: #7fa8d7;
+            background-color: #4a90e2;
+            color: #fff;
         }
         .agent1 .message-content {
-            background-color: #2a3f5f;
+            background-color: #23395d;
         }
-        .agent2 { 
+        .agent2 {
             align-self: flex-end;
-            margin-left: 55%; 
+            margin-left: 55%;
         }
         .agent2 .message-header {
-            background-color: #2d2d2d;
-            color: #b0b0b0;
+            background-color: #f39c12;
+            color: #fff;
         }
         .agent2 .message-content {
-            background-color: #3c3c3c;
+            background-color: #593c1f;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
     </style>
 </head>
@@ -119,10 +125,12 @@
                     currentMessageDiv.appendChild(headerDiv);
                     currentMessageDiv.appendChild(currentContentDiv);
                     chatContainer.appendChild(currentMessageDiv);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
                     break;
                 case 'word':
                     if (currentContentDiv) {
                         currentContentDiv.textContent += data.content;
+                        chatContainer.scrollTop = chatContainer.scrollHeight;
                     }
                     break;
                 case 'end':
