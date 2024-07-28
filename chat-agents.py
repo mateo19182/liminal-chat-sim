@@ -5,6 +5,8 @@ from ollama import AsyncClient
 import sys
 import json
 import random
+import os
+from datetime import datetime
 
 class Agent:
     def __init__(self, name, model, system_prompt, is_bastos_model=False):
@@ -49,43 +51,52 @@ class Agent:
         self.conversation_history.append({"role": "user", "content": message})
         self.conversation_history.append({"role": "assistant", "content": full_response})
         
-        self.conversation_history = self.conversation_history[-10:]
+        self.conversation_history = self.conversation_history[-5:]
 
 def load_user_prompts(filename):
     with open(filename, 'r') as f:
         return [line.strip() for line in f if line.strip()]
 
-async def chat_simulation(agent1, agent2, initial_setting, num_turns=10):
-    yield json.dumps({"type": "setting", "content": initial_setting}) + "\n"
+async def chat_simulation(agent1, agent2, initial_setting, num_turns=100):
+    log_filename = f"logs/conversation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    os.makedirs(os.path.dirname(log_filename), exist_ok=True)
+    
+    with open(log_filename, 'w', encoding='utf-8') as log_file:
+        log_file.write(f"Initial Setting: {initial_setting}\n\n")
+        
+        yield json.dumps({"type": "setting", "content": initial_setting}) + "\n"
 
-    user_prompts = load_user_prompts('user_prompts.txt')
+        user_prompts = load_user_prompts('user_prompts.txt')
 
-    current_speaker = agent1
-    other_speaker = agent2
-    prompt = f"Estamos en: {initial_setting}. Inicia la conversación con una pregunta relevante en español."
+        current_speaker = agent1
+        other_speaker = agent2
+        prompt = f"Estamos en: {initial_setting}. Inicia la conversación con una pregunta relevante en español."
 
-    for turn in range(num_turns):
-        print(f"\nDebug: Turn {turn + 1}, {current_speaker.name} speaking", file=sys.stderr)
-        yield json.dumps({"type": "start", "agent": current_speaker.name}) + "\n"
-        
-        if current_speaker.name == "Agent1":
-            new_topic = random.choice(user_prompts)
-            current_speaker.system_prompt = f"Eres un miembro del público en una conferencia de Miguel Anxo Bastos. Mantén tus intervenciones breves y neutrales, con poca personalidad. Hazle preguntas breves y abiertas sobre sus ideas en diversos temas interesantes, especialmente sobre: {new_topic}. El ponente es Miguel Anxo Bastos Boubeta (A Bouciña, Lavadores, Vigo, 12 de agosto de 1967) es un profesor universitario, economista, politólogo y conferenciante español, conocido por su defensa de las tesis del liberalismo económico y en concreto de la escuela austríaca. Nunca ha escrito un libro. Es considerado por muchos como uno de los principales defensores del anarcocapitalismo y paleolibertarismo dentro de la Esfera Española y Americana. Las preguntas deben ser originales y complejas. Mantén tus intervenciones cortas y directas, no más de un párrafo, profundizando en el tema. No halagues al profesor si interactues demasiado con su argumento, simplemente propón nuevas preguntas."
-        
-        #include_system_prompt = current_speaker.name == "Agent1"
-        
-        full_response = ""
-        async for word in current_speaker.respond(prompt, True): # include_system_prompt
-            full_response += word
-            yield json.dumps({"type": "word", "content": word}) + "\n"
-            await asyncio.sleep(0.05)
-        
-        yield json.dumps({"type": "end"}) + "\n"
-        
-        await asyncio.sleep(1)
+        for turn in range(num_turns):
+            print(f"\nDebug: Turn {turn + 1}, {current_speaker.name} speaking", file=sys.stderr)
+            yield json.dumps({"type": "start", "agent": current_speaker.name}) + "\n"
+            
+            if current_speaker.name == "Agent1":
+                new_topic = random.choice(user_prompts)
+                current_speaker.system_prompt = f"Eres un miembro del público en una conferencia de Miguel Anxo Bastos. Mantén tus intervenciones breves y neutrales, con poca personalidad. Hazle preguntas breves y abiertas sobre sus ideas en diversos temas interesantes, especialmente sobre: {new_topic}. El ponente es Miguel Anxo Bastos Boubeta (A Bouciña, Lavadores, Vigo, 12 de agosto de 1967) es un profesor universitario, economista, politólogo y conferenciante español, conocido por su defensa de las tesis del liberalismo económico y en concreto de la escuela austríaca. Nunca ha escrito un libro. Es considerado por muchos como uno de los principales defensores del anarcocapitalismo y paleolibertarismo dentro de la Esfera Española y Americana. Las preguntas deben ser originales y complejas. Mantén tus intervenciones cortas y directas, no más de un párrafo, profundizando en el tema. No halagues al profesor si interactues demasiado con su argumento, simplemente propón nuevas preguntas."
+            
+            full_response = ""
+            async for word in current_speaker.respond(prompt, True):
+                full_response += word
+                yield json.dumps({"type": "word", "content": word}) + "\n"
+                await asyncio.sleep(0.05)
+            
+            yield json.dumps({"type": "end"}) + "\n"
+            
+            log_file.write(f"{current_speaker.name}: {full_response}\n\n")
+            log_file.flush()
 
-        current_speaker, other_speaker = other_speaker, current_speaker
-        prompt = full_response.strip()
+            await asyncio.sleep(1)
+
+            current_speaker, other_speaker = other_speaker, current_speaker
+            prompt = full_response.strip()
+
+        yield json.dumps({"type": "conversation_end"}) + "\n"
 
 async def stream_handler(request):
     response = web.StreamResponse(status=200, reason='OK', headers={
@@ -105,6 +116,8 @@ async def stream_handler(request):
     try:
         async for message in chat_simulation(agent1, agent2, initial_setting):
             await response.write(f"data: {message}\n\n".encode('utf-8'))
+            if json.loads(message)["type"] == "conversation_end":
+                break
     except Exception as e:
         print(f"Debug: Error occurred: {str(e)}", file=sys.stderr)
     finally:
@@ -121,7 +134,6 @@ app = web.Application()
 app.router.add_get('/', index_handler)  
 app.router.add_get('/stream', stream_handler)
 app.router.add_static('/static/', path='./static/', name='static')
-
 
 if __name__ == '__main__':
     web.run_app(app, port=8888)
