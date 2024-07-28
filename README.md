@@ -4,9 +4,6 @@ Requires [Ollama](https://ollama.com/).
 
 Right now set up with a model finetuned on Miguel Anxo Bastos. (https://github.com/mateo19182/bastos-finetune)
 
-![image](https://github.com/user-attachments/assets/d5886594-9f65-4def-8547-66fcee14de6c)
-
-
 
 TODO:
 - simplify code
@@ -15,3 +12,6 @@ TODO:
 - create more finetuned models
 
 ultimate idea its a book/theater play that writes itself infinetly...
+
+
+![image](https://github.com/user-attachments/assets/d5886594-9f65-4def-8547-66fcee14de6c)
